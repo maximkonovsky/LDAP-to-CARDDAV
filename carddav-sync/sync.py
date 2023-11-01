@@ -164,7 +164,7 @@ def read_config():
         config['LDAP_BASE_DN'] += os.environ['LDAP_CARDDAV_LDAP_BASE_DN_EXT'].split(";")
 
 
-    # При создании в БД пользователей используется хеш нижеприведённого пароля
+    # При синхронизации календарей пользователей используется хеш нижеприведённого пароля
     config['BAIKAL_AUTH_ADDRESSBOOK_PASSWORD'] = "5VmFw@8ZGulM"
 
     return config
