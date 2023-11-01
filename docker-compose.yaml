@@ -1,0 +1,101 @@
+# Docker Compose file for a Baikal server
+
+version: '3.0'
+services:
+  baikal:
+    build: ./baikal
+    container_name: baikal
+    restart: always
+    environment:
+      BAIKAL_SERVERNAME: ${BAIKAL_SERVERNAME}
+#      BAIKAL_SERVERALIAS: dav.docrobot.ru dav.ecomdoc.ru
+      APACHE_AuthLDAPURL: "${LDAP_CARDDAV_LDAP_URI}/${LDAP_CARDDAV_LDAP_BASE_DN}?sAMAccountName?sub?(objectclass=*)"
+      APACHE_AuthLDAPBindDN: ${LDAP_CARDDAV_LDAP_BIND_DN}
+      APACHE_AuthLDAPBindPassword: ${LDAP_CARDDAV_LDAP_BIND_DN_PASSWORD}
+    ports:
+      - "8888:80"
+      - "8443:443"
+    volumes:
+      - config:/var/www/baikal/config
+      - specific:/var/www/baikal/Specific
+      - ssl:/etc/ssl/private
+      - apache:/etc/apache2/sites-available
+    networks:
+      - backend
+
+  baikal-mysql:
+    image: mariadb:10
+    restart: always
+    container_name: baikal-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - db:/var/lib/mysql
+    networks:
+      - backend
+
+  carddav-sync:
+    build: ./carddav-sync
+    image: carddav-sync
+    container_name: carddav-sync
+    network_mode: host
+    volumes:
+      - carddav-sync:/carddav
+    environment:
+      - LDAP_CARDDAV_LDAP_URI=$LDAP_CARDDAV_LDAP_URI
+      - LDAP_CARDDAV_LDAP_BASE_DN=$LDAP_CARDDAV_LDAP_BASE_DN
+      - LDAP_CARDDAV_LDAP_BASE_DN_EXT=$LDAP_CARDDAV_LDAP_BASE_DN_EXT
+      - LDAP_CARDDAV_LDAP_BIND_DN=$LDAP_CARDDAV_LDAP_BIND_DN
+      - LDAP_CARDDAV_LDAP_BIND_DN_PASSWORD=$LDAP_CARDDAV_LDAP_BIND_DN_PASSWORD
+      - LDAP_CARDDAV_SYNC_INTERVAL=$LDAP_CARDDAV_CARDDAV_SYNC_INTERVAL
+      - LDAP_CARDDAV_LDAP_FILTER=$LDAP_CARDDAV_LDAP_FILTER
+      - BAIKAL_ADDRESSBOOK_URL=$BAIKAL_ADDRESSBOOK_URL
+      - MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
+      - MYSQL_DATABASE=$MYSQL_DATABASE
+      - MYSQL_USER=$MYSQL_USER
+      - MYSQL_PASSWORD=$MYSQL_PASSWORD
+
+
+networks:
+  backend:
+
+volumes:
+  config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/baikal/config
+  specific:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/baikal/Specific
+  ssl:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/baikal/ssl
+  db:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/baikal/db
+  carddav-sync:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/baikal/carddav-sync
+  apache:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/baikal/apache
