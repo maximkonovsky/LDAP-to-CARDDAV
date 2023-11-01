@@ -1,0 +1,10 @@
+venv
+db
+conf
+__pycache__
+.vscode
+.env
+/carddav-sync/vcf/
+.idea
+/carddav-sync/sync — debug.py
+.*~
